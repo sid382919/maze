@@ -67,6 +67,25 @@ function rectCollide(a, b) {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  // Check for win screen
+  if (won) {
+    // Fill white background for end screen
+    ctx.fillStyle = colors.white;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = colors.black;
+    ctx.font = "50px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("You Win!", canvas.width / 2, 180);
+
+    ctx.font = "30px sans-serif";
+    ctx.fillText(`You took ${(completeTime / 1000).toFixed(2)}s`, canvas.width / 2, 230);
+    ctx.fillText(`Best time: ${(bestTime / 1000).toFixed(2)}s`, canvas.width / 2, 270);
+
+    return; // Don’t draw rest of game
+  }
+
+  // Game grid + maze
   ctx.strokeStyle = "rgb(100,100,100)";
   for (let x = 0; x <= 600; x += 50) {
     ctx.beginPath();
@@ -87,21 +106,11 @@ function draw() {
   });
 
   ctx.fillStyle = colors.white;
-  ctx.fillRect(50, 450, 50, 50);
-  ctx.fillRect(endBlock.x, endBlock.y, endBlock.w, endBlock.h);
+  ctx.fillRect(50, 450, 50, 50); // Start block
+  ctx.fillRect(endBlock.x, endBlock.y, endBlock.w, endBlock.h); // End block
 
   ctx.fillStyle = colors.red;
   ctx.fillRect(player.x, player.y, player.w, player.h);
-
-  if (won) {
-    ctx.fillStyle = colors.black;
-    ctx.font = "50px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("You Win!", canvas.width / 2, 180);
-    ctx.font = "30px sans-serif";
-    ctx.fillText(`You took ${(completeTime / 1000).toFixed(2)}s`, canvas.width / 2, 230);
-    ctx.fillText(`Best time: ${(bestTime / 1000).toFixed(2)}s`, canvas.width / 2, 270);
-  }
 }
 
 function update() {
