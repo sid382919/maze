@@ -1,28 +1,25 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-const restartBtn = document.getElementById("restartBtn");
-const bgMusic = document.getElementById("bgMusic");
+
+canvas.width = 600;
+canvas.height = 500;
 
 const colors = {
-  orange: "rgb(255,165,0)",
-  white: "white",
-  black: "black",
-  red: "rgb(255,0,0)",
-  grid: "rgb(100,100,100)",
+  black: "#000000",
+  white: "#FFFFFF",
+  orange: "#FFA500",
+  red: "#FF0000",
 };
 
-let state = "start"; // "start", "playing", "won"
+const playerSpeed = 4;
+const gridSize = 50;
 
-const player = {
-  x: 75,
-  y: 425,
-  w: 45,
-  h: 45,
-  speed: 4,
-};
+let state = "start"; // start, playing, won
 
-const keys = {};
+// Player rect (x, y, w, h)
+let player = { x: 50, y: 400, w: 45, h: 45 };
 
+// Maze walls
 const walls = [
   { x: 0, y: 0, w: 50, h: 800 },
   { x: 50, y: 0, w: 750, h: 50 },
@@ -45,30 +42,27 @@ const walls = [
   { x: 400, y: 350, w: 150, h: 50 },
 ];
 
+// Start and end blocks
 const startRect = { x: 50, y: 450, w: 50, h: 50 };
 const endRect = { x: 500, y: 450, w: 50, h: 50 };
 
-const GRID_SIZE = 50;
-
-let startTime;
-let completeTime = null;
+let keys = {};
+let startTime = null;
+let completeTime = 0;
 let bestTime = null;
 
-function drawGrid() {
-  ctx.strokeStyle = colors.grid;
-  for (let x = 0; x <= canvas.width; x += GRID_SIZE) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
-    ctx.stroke();
+// Event listeners
+window.addEventListener("keydown", (e) => {
+  keys[e.key] = true;
+  if (state === "start") {
+    state = "playing";
+    startTime = performance.now();
   }
-  for (let y = 0; y <= canvas.height; y += GRID_SIZE) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
-  }
-}
+});
+
+window.addEventListener("keyup", (e) => {
+  keys[e.key] = false;
+});
 
 function rectsCollide(r1, r2) {
   return !(
@@ -84,23 +78,55 @@ function drawRect(rect, color) {
   ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
 }
 
-function drawText(text, x, y, size = "30px", color = colors.black, align = "center") {
+function drawText(text, x, y, fontSize = "20px", color = colors.black) {
   ctx.fillStyle = color;
-  ctx.font = `${size} Arial`;
-  ctx.textAlign = align;
+  ctx.font = `${fontSize} Arial`;
+  ctx.textAlign = "center";
   ctx.fillText(text, x, y);
 }
 
-function resetGame() {
-  player.x = 75;
-  player.y = 425;
-  completeTime = null;
-  startTime = new Date();
-  state = "playing";
-  restartBtn.style.display = "none";
-  bgMusic.play();
-  canvas.focus();
+function drawGrid() {
+  ctx.strokeStyle = "#646464";
+  for (let x = 0; x <= canvas.width; x += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= canvas.height; y += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
 }
+
+function resetGame() {
+  player.x = 50;
+  player.y = 400;
+  state = "start";
+  completeTime = 0;
+  startTime = null;
+}
+
+canvas.addEventListener("click", (e) => {
+  if (state === "won") {
+    // Calculate mouse pos relative to canvas
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Check if click inside restart button
+    if (
+      mouseX >= canvas.width / 2 - 70 &&
+      mouseX <= canvas.width / 2 + 70 &&
+      mouseY >= 350 &&
+      mouseY <= 390
+    ) {
+      resetGame();
+    }
+  }
+});
 
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -108,113 +134,74 @@ function gameLoop() {
   if (state === "start") {
     ctx.fillStyle = colors.white;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
     drawText("Press any key to start", canvas.width / 2, 200, "36px", colors.black);
     drawText("Use arrow keys to move", canvas.width / 2, 260, "28px", colors.black);
   } else if (state === "playing") {
-    // move player
-    let prevX = player.x;
-    let prevY = player.y;
+    ctx.fillStyle = colors.black;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (keys["ArrowLeft"]) player.x -= player.speed;
-    if (keys["ArrowRight"]) player.x += player.speed;
-    if (keys["ArrowUp"]) player.y -= player.speed;
-    if (keys["ArrowDown"]) player.y += player.speed;
-
-    // collision with walls
-    for (const wall of walls) {
-      if (
-        rectsCollide(
-          { x: player.x, y: player.y, w: player.w, h: player.h },
-          wall
-        )
-      ) {
-        player.x = prevX;
-        player.y = prevY;
-        break;
-      }
-    }
-
-    // constrain player to canvas
-    player.x = Math.min(Math.max(0, player.x), canvas.width - player.w);
-    player.y = Math.min(Math.max(0, player.y), canvas.height - player.h);
-
-    // draw grid
     drawGrid();
 
-    // draw walls
     for (const wall of walls) {
       drawRect(wall, colors.orange);
     }
 
-    // draw start and end blocks
     drawRect(startRect, colors.white);
     drawRect(endRect, colors.white);
 
     drawText("Start", startRect.x + startRect.w / 2, startRect.y + startRect.h / 2 + 8, "20px", colors.black);
     drawText("End", endRect.x + endRect.w / 2, endRect.y + endRect.h / 2 + 8, "20px", colors.black);
 
-    // draw player as rectangle
+    // Move player
+    let previousPos = { ...player };
+
+    if (keys["ArrowLeft"]) player.x -= playerSpeed;
+    if (keys["ArrowRight"]) player.x += playerSpeed;
+    if (keys["ArrowUp"]) player.y -= playerSpeed;
+    if (keys["ArrowDown"]) player.y += playerSpeed;
+
+    // Keep player inside canvas bounds
+    player.x = Math.max(0, Math.min(player.x, canvas.width - player.w));
+    player.y = Math.max(0, Math.min(player.y, canvas.height - player.h));
+
+    // Check collisions
+    for (const wall of walls) {
+      if (rectsCollide(player, wall)) {
+        player = previousPos; // revert to previous position on collision
+        break;
+      }
+    }
+
+    // Check if player reached end
+    if (rectsCollide(player, endRect)) {
+      state = "won";
+      completeTime = (performance.now() - startTime) / 1000;
+      if (bestTime === null || completeTime < bestTime) {
+        bestTime = completeTime;
+      }
+    }
+
     drawRect(player, colors.red);
     drawText("You", player.x + player.w / 2, player.y + player.h / 2 + 8, "20px", colors.black);
-
-    // check win
-    if (
-      rectsCollide(player, endRect)
-    ) {
-      state = "won";
-      completeTime = (new Date() - startTime) / 1000;
-      if (bestTime === null || completeTime < bestTime) bestTime = completeTime;
-      restartBtn.style.display = "inline-block";
-      bgMusic.pause();
-    }
   } else if (state === "won") {
     ctx.fillStyle = colors.white;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     drawText("You Win!", canvas.width / 2, 200, "50px", colors.black);
-    drawText(
-      `You took: ${completeTime.toFixed(2)} seconds`,
-      canvas.width / 2,
-      260,
-      "28px",
-      colors.black
-    );
+    drawText(`You took: ${completeTime.toFixed(2)} seconds`, canvas.width / 2, 260, "28px", colors.black);
+
     if (bestTime !== null) {
-      drawText(
-        `Best time: ${bestTime.toFixed(2)} seconds`,
-        canvas.width / 2,
-        310,
-        "28px",
-        colors.black
-      );
+      drawText(`Best time: ${bestTime.toFixed(2)} seconds`, canvas.width / 2, 310, "28px", colors.black);
     }
+
+    // Draw restart button
+    ctx.fillStyle = colors.orange;
+    ctx.fillRect(canvas.width / 2 - 70, 350, 140, 40);
+    drawText("Restart", canvas.width / 2, 380, "28px", colors.black);
   }
 
   requestAnimationFrame(gameLoop);
 }
 
-// Event listeners
-window.addEventListener("keydown", (e) => {
-  if (state === "start") {
-    resetGame();
-  }
-  keys[e.key] = true;
-});
-
-window.addEventListener("keyup", (e) => {
-  keys[e.key] = false;
-});
-
-restartBtn.addEventListener("click", () => {
-  resetGame();
-});
-
-// Start background music muted until user interaction due to browser policies
-canvas.addEventListener("click", () => {
-  if(bgMusic.paused) {
-    bgMusic.play();
-  }
-});
-
-resetGame();
 gameLoop();
