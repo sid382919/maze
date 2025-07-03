@@ -6,21 +6,43 @@
   <title>Maze Game</title>
   <style>
     body {
-      background: #222;
+      margin: 0;
+      background: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
+      font-family: Arial, sans-serif;
+      user-select: none;
     }
     canvas {
-      border: 2px solid #fff;
       background: #000;
+      display: block;
+      border: 2px solid orange;
+    }
+    #restartBtn {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      background-color: orange;
+      border: none;
+      color: black;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <canvas id="gameCanvas"></canvas>
+  <div style="text-align:center;">
+    <canvas id="gameCanvas" width="600" height="500"></canvas>
+    <br />
+    <button id="restartBtn">Restart</button>
+  </div>
+
+  <audio id="bgMusic" src="maze_music.mp3" loop></audio>
+
   <script src="game.js"></script>
 </body>
 </html>
+
