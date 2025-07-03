@@ -4,14 +4,42 @@
   <meta charset="UTF-8" />
   <title>Maze Game</title>
   <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { background: black; display: block; margin: auto; }
-    #restart { display: none; padding: 10px 20px; font-size: 18px; position: absolute; left: 50%; top: 70%; transform: translateX(-50%); }
+    body {
+      margin: 0;
+      background-color: black;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: black;
+      font-family: Arial, sans-serif;
+      user-select: none;
+    }
+    canvas {
+      background-color: black;
+      display: block;
+      margin: 0 auto;
+      outline: none;
+    }
+    #restartBtn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <canvas id="game" width="600" height="500" tabindex="0"></canvas>
-  <button id="restart">Restart</button>
-  <script src="maze.js"></script>
+  <canvas id="gameCanvas" width="600" height="500" tabindex="0"></canvas>
+  <button id="restartBtn">Restart</button>
+
+  <audio id="bgMusic" loop>
+    <source src="maze_music.mp3" type="audio/mpeg" />
+    Your browser does not support the audio element.
+  </audio>
+
+  <script src="game.js"></script>
 </body>
 </html>
